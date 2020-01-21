@@ -1,0 +1,43 @@
+---
+steps:
+  - task: jikuma.devops-github-extension.custom-build-release-task.azuredevopsgithub@0
+    displayName: 'Merge into master branch'
+    inputs:
+      gitHubConnection: 'mshivaku'
+      body: |
+       {
+         "base": "master",
+         "head": "$(Build.SourceVersion)",
+         "commit_message": "[skip ci] Automated merge from Azure DevOps pipeline from $(Build.SourceBranchName)"
+       }
+      githubrestapiurl: 'https://api.github.com/repos/$(Build.Repository.Name)/merges'
+  - task: jikuma.devops-github-extension.custom-build-release-task.azuredevopsgithub@0
+    displayName: 'Update changes from master back to develop branch'
+    inputs:
+      gitHubConnection: 'mshivaku'
+      body: |
+       {
+         "base": "develop",
+         "head": "master",
+         "commit_message": "[skip ci] Automated merge from Azure DevOps pipeline from master"
+       }
+      githubrestapiurl: 'https://api.github.com/repos/$(Build.Repository.Name)/merges'
+  - task: jikuma.devops-github-extension.custom-build-release-task.azuredevopsgithub@0
+    displayName: 'Tag Release'
+    inputs:
+      gitHubConnection: 'mshivaku'
+      body: |
+       {
+         "tag_name": "$(Build.BuildNumber)",
+         "target": "master",
+         "name": "$(Build.BuildNumber)",
+         "draft": false,
+         "prerelease": false
+       }
+      githubrestapiurl: 'https://api.github.com/repos/$(Build.Repository.Name)/releases'
+      ignoreFailure: true
+	- task: kar-auto.ado-tasks.tag-and-merge.resetGithubBranch@0
+		displayName: 'Reset hotfix to be based off of master'
+		inputs:
+			githubConnection: 'svc-ol-azpipeline'
+			repository: '$(Build.Repository.Name)'
